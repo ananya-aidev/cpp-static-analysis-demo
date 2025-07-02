@@ -7,34 +7,33 @@ on:
     branches: [ main ]
 
 jobs:
-  static-analysis:
+  cppcheck:
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Install Cppcheck and Flawfinder
+    - name: Install Cppcheck and Python modules
       run: |
         sudo apt-get update
-        sudo apt-get install cppcheck flawfinder -y
+        sudo apt-get install cppcheck python3-pip -y
+        pip3 install pygments
 
-    - name: Run Cppcheck
+    - name: Run Cppcheck (generate XML)
       run: |
-        cppcheck --enable=all --inconclusive --xml . 2> cppcheck-report.xml
+        cppcheck --enable=all --xml --xml-version=2 . 2> cppcheck-report.xml
 
-    - name: Run Flawfinder
+    - name: Generate HTML Report from XML
       run: |
-        flawfinder . > flawfinder-report.txt
+        python3 /usr/share/cppcheck/htmlreport/cppcheck-htmlreport \
+          --file=cppcheck-report.xml \
+          --report-dir=cppcheck-html \
+          --source-dir=. \
+          --title="Cppcheck Static Analysis Report"
 
-    - name: Upload Cppcheck report
+    - name: Upload HTML Report as Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: cppcheck-report
-        path: cppcheck-report.xml
-
-    - name: Upload Flawfinder report
-      uses: actions/upload-artifact@v4
-      with:
-        name: flawfinder-report
-        path: flawfinder-report.txt
+        name: cppcheck-html
+        path: cppcheck-html/
