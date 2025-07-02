@@ -14,19 +14,24 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Install Cppcheck and Python modules
+    - name: Install Cppcheck and Python requirements
       run: |
         sudo apt-get update
         sudo apt-get install cppcheck python3-pip -y
         pip3 install pygments
 
-    - name: Run Cppcheck (generate XML)
+    - name: Run Cppcheck and generate XML report
       run: |
         cppcheck --enable=all --xml --xml-version=2 . 2> cppcheck-report.xml
 
-    - name: Generate HTML Report from XML
+    - name: Download cppcheck-htmlreport script
       run: |
-        python3 /usr/share/cppcheck/htmlreport/cppcheck-htmlreport \
+        wget https://raw.githubusercontent.com/danmar/cppcheck/main/htmlreport/cppcheck-htmlreport -O cppcheck-htmlreport
+        chmod +x cppcheck-htmlreport
+
+    - name: Generate HTML Report
+      run: |
+        python3 cppcheck-htmlreport \
           --file=cppcheck-report.xml \
           --report-dir=cppcheck-html \
           --source-dir=. \
